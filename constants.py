@@ -27,11 +27,14 @@ ELEMENT_HEIGHT = 27
 SEED = 0
 MAP_OPTIONS = [
     "Random Noise Map",
-    "Perlin Noise Map"
+    "Perlin Noise Map",
+    "Falloff Map"
 ]
 TILE_SIZE = 5
+APPLY_COLOR = False
+USE_FALLOFF = False
 
-SCALE = 20
-OCTAVES = 1
+SCALE = 15
+OCTAVES = 3
 PERSISTENCE = 0.5
 LACUNARITY = 2.0

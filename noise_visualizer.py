@@ -3,6 +3,7 @@ import sys
 import pygame
 import pygame_gui
 from pygame_gui import UIManager
+from pygame_gui.elements.ui_button import UIButton
 from pygame_gui.elements.ui_drop_down_menu import UIDropDownMenu
 from pygame_gui.elements.ui_horizontal_slider import UIHorizontalSlider
 from pygame_gui.elements.ui_label import UILabel
@@ -25,8 +26,9 @@ class Main:
         pygame.display.set_caption(TITLE)
         self.clock = pygame.time.Clock()
 
+        self.apply_color = APPLY_COLOR
+        self.use_falloff = USE_FALLOFF
         self.on_init_gui()
-
         self.map_surf = pygame.Surface((MAP_SIZE, MAP_SIZE))
         self.regenerate_map()
 
@@ -39,22 +41,22 @@ class Main:
             manager=self.ui_manager,
             starting_layer_height=0,
             margins={
-                "left": MARGIN,
-                "right": MARGIN,
-                "top": MARGIN,
-                "bottom": MARGIN
+                "left": 5,
+                "right": 5,
+                "top": 5,
+                "bottom": 5
             }
         )
 
         UILabel(
-            relative_rect=pygame.Rect((0, ELEMENT_HEIGHT*0, PANEL_SIZE[0] - MARGIN*2, ELEMENT_HEIGHT)),
+            relative_rect=pygame.Rect((0, 0, 240, 27)),
             manager=self.ui_manager,
             container=panel,
             text="Map type"
         )
 
         self.map_type_menu = UIDropDownMenu(
-            relative_rect=pygame.Rect((0, ELEMENT_HEIGHT*1, PANEL_SIZE[0] - MARGIN*2, ELEMENT_HEIGHT)),
+            relative_rect=pygame.Rect((0, 27*1, 240, 27)),
             manager=self.ui_manager,
             container=panel,
             options_list=MAP_OPTIONS,
@@ -62,14 +64,14 @@ class Main:
         )
 
         UILabel(
-            relative_rect=pygame.Rect((0, ELEMENT_HEIGHT*2, PANEL_SIZE[0] - MARGIN*2, ELEMENT_HEIGHT)),
+            relative_rect=pygame.Rect((0, 27*2, 120, 27)),
             manager=self.ui_manager,
             container=panel,
             text="Tile Size"
         )
 
         self.tile_size_entry = UITextEntryLine(
-            relative_rect=pygame.Rect((0, ELEMENT_HEIGHT*3, PANEL_SIZE[0] - MARGIN*2, ELEMENT_HEIGHT)),
+            relative_rect=pygame.Rect((0, 27*3, 120, 27)),
             manager=self.ui_manager,
             container=panel
         )
@@ -77,14 +79,14 @@ class Main:
         self.tile_size_entry.set_allowed_characters("numbers")
 
         UILabel(
-            relative_rect=pygame.Rect((0, ELEMENT_HEIGHT*4, PANEL_SIZE[0] - MARGIN*2, ELEMENT_HEIGHT)),
+            relative_rect=pygame.Rect((120, 27*2, 120, 27)),
             manager=self.ui_manager,
             container=panel,
             text="Seed"
         )
 
         self.seed_entry = UITextEntryLine(
-            relative_rect=pygame.Rect((0, ELEMENT_HEIGHT*5, PANEL_SIZE[0] - MARGIN*2, ELEMENT_HEIGHT)),
+            relative_rect=pygame.Rect((120, 27*3, 120, 27)),
             manager=self.ui_manager,
             container=panel
         )
@@ -92,21 +94,49 @@ class Main:
         self.seed_entry.set_allowed_characters("numbers")
 
         UILabel(
-            relative_rect=pygame.Rect((0, ELEMENT_HEIGHT*6, PANEL_SIZE[0] - MARGIN*2, ELEMENT_HEIGHT)),
+            relative_rect=pygame.Rect((0, 27*4, 120, 27)),
+            manager=self.ui_manager,
+            container=panel,
+            text="Apply Colors"
+        )
+
+        self.apply_color_button = UIButton(
+            relative_rect=pygame.Rect((120, 27*4, 120, 27)),
+            manager=self.ui_manager,
+            container=panel,
+            text=str(self.apply_color)
+        )
+
+        UILabel(
+            relative_rect=pygame.Rect((0, 27*5, 120, 27)),
+            manager=self.ui_manager,
+            container=panel,
+            text="Falloff Map"
+        )
+
+        self.use_falloff_button = UIButton(
+            relative_rect=pygame.Rect((120, 27*5, 120, 27)),
+            manager=self.ui_manager,
+            container=panel,
+            text=str(self.use_falloff)
+        )
+
+        UILabel(
+            relative_rect=pygame.Rect((0, 27*6, 240, 27)),
             manager=self.ui_manager,
             container=panel,
             text="Scale"
         )
 
         self.scale_entry = UITextEntryLine(
-            relative_rect=pygame.Rect((0, ELEMENT_HEIGHT*7, PANEL_SIZE[0] - MARGIN*2, ELEMENT_HEIGHT)),
+            relative_rect=pygame.Rect((0, 27*7, 240, 27)),
             manager=self.ui_manager,
             container=panel
         )
         self.scale_entry.set_text(str(SCALE))
 
         self.scale_slider = UIHorizontalSlider(
-            relative_rect=pygame.Rect((0, ELEMENT_HEIGHT*8, PANEL_SIZE[0] - MARGIN*2, ELEMENT_HEIGHT)),
+            relative_rect=pygame.Rect((0, 27*8, 240, 27)),
             manager=self.ui_manager,
             container=panel,
             start_value=SCALE,
@@ -114,14 +144,14 @@ class Main:
         )
 
         UILabel(
-            relative_rect=pygame.Rect((0, ELEMENT_HEIGHT*9, PANEL_SIZE[0] - MARGIN*2, ELEMENT_HEIGHT)),
+            relative_rect=pygame.Rect((0, 27*9, 240, 27)),
             manager=self.ui_manager,
             container=panel,
             text="Octaves"
         )
 
         self.octaves_entry = UITextEntryLine(
-            relative_rect=pygame.Rect((0, ELEMENT_HEIGHT*10, PANEL_SIZE[0] - MARGIN*2, ELEMENT_HEIGHT)),
+            relative_rect=pygame.Rect((0, 27*10, 240, 27)),
             manager=self.ui_manager,
             container=panel
         )
@@ -129,7 +159,7 @@ class Main:
         self.octaves_entry.set_allowed_characters("numbers")
 
         self.octaves_slider = UIHorizontalSlider(
-            relative_rect=pygame.Rect((0, ELEMENT_HEIGHT*11, PANEL_SIZE[0] - MARGIN*2, ELEMENT_HEIGHT)),
+            relative_rect=pygame.Rect((0, 27*11, 240, 27)),
             manager=self.ui_manager,
             container=panel,
             start_value=OCTAVES,
@@ -137,21 +167,21 @@ class Main:
         )
 
         UILabel(
-            relative_rect=pygame.Rect((0, ELEMENT_HEIGHT*12, PANEL_SIZE[0] - MARGIN*2, ELEMENT_HEIGHT)),
+            relative_rect=pygame.Rect((0, 27*12, 240, 27)),
             manager=self.ui_manager,
             container=panel,
             text="Persistence"
         )
 
         self.persistence_entry = UITextEntryLine(
-            relative_rect=pygame.Rect((0, ELEMENT_HEIGHT*13, PANEL_SIZE[0] - MARGIN*2, ELEMENT_HEIGHT)),
+            relative_rect=pygame.Rect((0, 27*13, 240, 27)),
             manager=self.ui_manager,
             container=panel
         )
         self.persistence_entry.set_text(str(PERSISTENCE))
 
         self.persistence_slider = UIHorizontalSlider(
-            relative_rect=pygame.Rect((0, ELEMENT_HEIGHT*14, PANEL_SIZE[0] - MARGIN*2, ELEMENT_HEIGHT)),
+            relative_rect=pygame.Rect((0, 27*14, 240, 27)),
             manager=self.ui_manager,
             container=panel,
             start_value=PERSISTENCE,
@@ -159,21 +189,21 @@ class Main:
         )
 
         UILabel(
-            relative_rect=pygame.Rect((0, ELEMENT_HEIGHT*15, PANEL_SIZE[0] - MARGIN*2, ELEMENT_HEIGHT)),
+            relative_rect=pygame.Rect((0, 27*15, 240, 27)),
             manager=self.ui_manager,
             container=panel,
             text="Lacunarity"
         )
 
         self.lacunarity_entry = UITextEntryLine(
-            relative_rect=pygame.Rect((0, ELEMENT_HEIGHT*16, PANEL_SIZE[0] - MARGIN*2, ELEMENT_HEIGHT)),
+            relative_rect=pygame.Rect((0, 27*16, 240, 27)),
             manager=self.ui_manager,
             container=panel
         )
         self.lacunarity_entry.set_text(str(LACUNARITY))
 
         self.lacunarity_slider = UIHorizontalSlider(
-            relative_rect=pygame.Rect((0, ELEMENT_HEIGHT*17, PANEL_SIZE[0] - MARGIN*2, ELEMENT_HEIGHT)),
+            relative_rect=pygame.Rect((0, 27*17, 240, 27)),
             manager=self.ui_manager,
             container=panel,
             start_value=LACUNARITY,
@@ -217,6 +247,23 @@ class Main:
                     self.lacunarity_entry.set_text(str(self.lacunarity_slider.get_current_value()))
 
                 self.regenerate_map()
+            elif event.user_type == pygame_gui.UI_BUTTON_PRESSED:
+                if event.ui_element == self.apply_color_button:
+                    if self.apply_color:
+                        self.apply_color = False
+                        self.apply_color_button.set_text(str(False))
+                    else:
+                        self.apply_color = True
+                        self.apply_color_button.set_text(str(True))
+                elif event.ui_element == self.use_falloff_button:
+                    if self.use_falloff:
+                        self.use_falloff = False
+                        self.use_falloff_button.set_text(str(False))
+                    else:
+                        self.use_falloff = True
+                        self.use_falloff_button.set_text(str(True))
+
+                self.regenerate_map()
 
 
     def on_run(self):
@@ -237,6 +284,8 @@ class Main:
         map_type = self.map_type_menu.selected_option
         tile_size = int(self.tile_size_entry.get_text())
         seed = int(self.seed_entry.get_text())
+        apply_color = self.apply_color
+        use_falloff = self.use_falloff
 
         scale = int(self.scale_entry.get_text())
         octaves = int(self.octaves_entry.get_text())
@@ -245,6 +294,7 @@ class Main:
 
         if map_type == "Random Noise Map":
             noise_map = core.random_noise(MAP_SIZE//tile_size, seed)
+            self.use_falloff_button.enable()
             self.scale_entry.disable()
             self.scale_slider.disable()
             self.octaves_entry.disable()
@@ -255,6 +305,7 @@ class Main:
             self.lacunarity_slider.disable()
         elif map_type == "Perlin Noise Map":
             noise_map = core.perlin_noise(MAP_SIZE//tile_size, seed, scale, octaves, persistence, lacunarity)
+            self.use_falloff_button.enable()
             self.scale_entry.enable()
             self.scale_slider.enable()
             self.octaves_entry.enable()
@@ -263,11 +314,35 @@ class Main:
             self.persistence_slider.enable()
             self.lacunarity_entry.enable()
             self.lacunarity_slider.enable()
+        elif map_type == "Falloff Map":
+            noise_map = core.generate_falloff_map(MAP_SIZE//tile_size)
+            self.use_falloff_button.disable()
+            self.scale_entry.disable()
+            self.scale_slider.disable()
+            self.octaves_entry.disable()
+            self.octaves_slider.disable()
+            self.persistence_entry.disable()
+            self.persistence_slider.disable()
+            self.lacunarity_entry.disable()
+            self.lacunarity_slider.disable()
 
-        for x in range(len(noise_map)):
-            for y in range(len(noise_map)):
-                color = BLACK.lerp(WHITE, noise_map[x][y])
-                self.map_surf.fill(color, ((x*tile_size, y*tile_size), (tile_size, tile_size)))
+        map_size = len(noise_map)
+        if use_falloff and map_type != "Falloff Map":
+            falloff_map = core.generate_falloff_map(map_size)
+            for x in range(map_size):
+                for y in range(map_size):
+                    noise_map[x][y] = max(0, min(noise_map[x][y] - falloff_map[x][y], 1))
+        if apply_color:
+            color_map = core.generate_color_map(noise_map, REGION_COLORS)
+            for x in range(map_size):
+                for y in range(map_size):
+                    color = color_map[x][y]
+                    self.map_surf.fill(color, ((x*tile_size, y*tile_size), (tile_size, tile_size)))
+        else:
+            for x in range(map_size):
+                for y in range(map_size):
+                    color = BLACK.lerp(WHITE, noise_map[x][y])
+                    self.map_surf.fill(color, ((x*tile_size, y*tile_size), (tile_size, tile_size)))
 
 
 if __name__ == '__main__':
