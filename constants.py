@@ -28,6 +28,7 @@ SEED = 0
 MAP_OPTIONS = [
     "Random Noise Map",
     "Perlin Noise Map",
+    "Simplex Noise Map",
     "Falloff Map"
 ]
 TILE_SIZE = 5

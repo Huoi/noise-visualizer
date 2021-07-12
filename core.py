@@ -19,7 +19,17 @@ def perlin_noise(size, seed, scale, octaves, persistence, lacunarity):
     noise_map = np.zeros((size, size))
     for x in range(size):
         for y in range(size):
-            noise_map[x][y] = noise.pnoise3(x / scale, y / scale, seed, octaves=octaves, persistence=persistence, lacunarity=lacunarity)
+            noise_map[x][y] = noise.pnoise3(x/scale, y/scale, seed, octaves=octaves, persistence=persistence, lacunarity=lacunarity)
+            noise_map[x][y] = (noise_map[x][y] + 1) / 2
+
+    return noise_map
+
+
+def simplex_noise(size, seed, scale, octaves, persistence, lacunarity):
+    noise_map = np.zeros((size, size))
+    for x in range(size):
+        for y in range(size):
+            noise_map[x][y] = noise.snoise3(x/scale, y/scale, seed, octaves=octaves, persistence=persistence, lacunarity=lacunarity)
             noise_map[x][y] = (noise_map[x][y] + 1) / 2
 
     return noise_map
@@ -52,6 +62,5 @@ def generate_falloff_map(map_size, a=3, b=2.2):
 
 
 if __name__ == '__main__':
-    from constants import REGION_COLORS
-    for key, value in REGION_COLORS.items():
-        print(key , value)
+    m = simplex_noise(5, 5, 5)
+    print(m)

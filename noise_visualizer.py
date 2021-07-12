@@ -295,36 +295,19 @@ class Main:
         if map_type == "Random Noise Map":
             noise_map = core.random_noise(MAP_SIZE//tile_size, seed)
             self.use_falloff_button.enable()
-            self.scale_entry.disable()
-            self.scale_slider.disable()
-            self.octaves_entry.disable()
-            self.octaves_slider.disable()
-            self.persistence_entry.disable()
-            self.persistence_slider.disable()
-            self.lacunarity_entry.disable()
-            self.lacunarity_slider.disable()
+            self.disable_noise_widgets()
         elif map_type == "Perlin Noise Map":
             noise_map = core.perlin_noise(MAP_SIZE//tile_size, seed, scale, octaves, persistence, lacunarity)
             self.use_falloff_button.enable()
-            self.scale_entry.enable()
-            self.scale_slider.enable()
-            self.octaves_entry.enable()
-            self.octaves_slider.enable()
-            self.persistence_entry.enable()
-            self.persistence_slider.enable()
-            self.lacunarity_entry.enable()
-            self.lacunarity_slider.enable()
+            self.enable_noise_widgets()
+        elif map_type == "Simplex Noise Map":
+            noise_map = core.simplex_noise(MAP_SIZE//tile_size, seed, scale, octaves, persistence, lacunarity)
+            self.use_falloff_button.enable()
+            self.enable_noise_widgets()
         elif map_type == "Falloff Map":
             noise_map = core.generate_falloff_map(MAP_SIZE//tile_size)
             self.use_falloff_button.disable()
-            self.scale_entry.disable()
-            self.scale_slider.disable()
-            self.octaves_entry.disable()
-            self.octaves_slider.disable()
-            self.persistence_entry.disable()
-            self.persistence_slider.disable()
-            self.lacunarity_entry.disable()
-            self.lacunarity_slider.disable()
+            self.disable_noise_widgets()
 
         map_size = len(noise_map)
         if use_falloff and map_type != "Falloff Map":
@@ -343,6 +326,28 @@ class Main:
                 for y in range(map_size):
                     color = BLACK.lerp(WHITE, noise_map[x][y])
                     self.map_surf.fill(color, ((x*tile_size, y*tile_size), (tile_size, tile_size)))
+
+
+    def enable_noise_widgets(self):
+        self.scale_entry.enable()
+        self.scale_slider.enable()
+        self.octaves_entry.enable()
+        self.octaves_slider.enable()
+        self.persistence_entry.enable()
+        self.persistence_slider.enable()
+        self.lacunarity_entry.enable()
+        self.lacunarity_slider.enable()
+
+
+    def disable_noise_widgets(self):
+        self.scale_entry.disable()
+        self.scale_slider.disable()
+        self.octaves_entry.disable()
+        self.octaves_slider.disable()
+        self.persistence_entry.disable()
+        self.persistence_slider.disable()
+        self.lacunarity_entry.disable()
+        self.lacunarity_slider.disable()
 
 
 if __name__ == '__main__':
