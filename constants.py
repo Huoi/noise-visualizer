@@ -1,9 +1,6 @@
 import pygame
 
-SCREEN_SIZE = (750, 500)
 MAP_SIZE = 500
-FPS = 60
-TITLE = "Template"
 
 BLACK = pygame.Color((0, 0, 0))
 WHITE = pygame.Color((255, 255, 255))
@@ -36,6 +33,12 @@ APPLY_COLOR = False
 USE_FALLOFF = False
 
 SCALE = 15
-OCTAVES = 3
+OCTAVES = 8
 PERSISTENCE = 0.5
 LACUNARITY = 2.0
+
+SEED_RANGE = (0, 999999)
+SCALE_RANGE = (1, 30)
+OCTAVES_RANGE = (1, 8)
+PERSISTENCE_RANGE = (0.0, 5.0)
+LACUNARITY_RANGE = (0.0, 5.0)

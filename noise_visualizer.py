@@ -1,3 +1,4 @@
+from random import randint, uniform
 import sys
 
 import pygame
@@ -21,9 +22,9 @@ class Main:
 
     def on_init(self):
         pygame.init()
-        self.screen = pygame.display.set_mode(SCREEN_SIZE)
-        self.display = pygame.Surface(SCREEN_SIZE)
-        pygame.display.set_caption(TITLE)
+        self.screen = pygame.display.set_mode((750, 500))
+        self.display = pygame.Surface((750, 500))
+        pygame.display.set_caption("Noise Visualizer")
         self.clock = pygame.time.Clock()
 
         self.apply_color = APPLY_COLOR
@@ -34,7 +35,7 @@ class Main:
 
 
     def on_init_gui(self):
-        self.ui_manager = UIManager(SCREEN_SIZE)
+        self.ui_manager = UIManager((750, 500))
 
         panel = UIPanel(
             relative_rect=pygame.Rect((MAP_SIZE, 0, *PANEL_SIZE)),
@@ -122,36 +123,36 @@ class Main:
         )
 
         UILabel(
-            relative_rect=pygame.Rect((0, 27*6, 240, 27)),
+            relative_rect=pygame.Rect((0, 27*6, 120, 27)),
             manager=self.ui_manager,
             container=panel,
             text="Scale"
         )
 
         self.scale_entry = UITextEntryLine(
-            relative_rect=pygame.Rect((0, 27*7, 240, 27)),
+            relative_rect=pygame.Rect((120, 27*6, 120, 27)),
             manager=self.ui_manager,
             container=panel
         )
         self.scale_entry.set_text(str(SCALE))
 
         self.scale_slider = UIHorizontalSlider(
-            relative_rect=pygame.Rect((0, 27*8, 240, 27)),
+            relative_rect=pygame.Rect((0, 27*7, 240, 27)),
             manager=self.ui_manager,
             container=panel,
             start_value=SCALE,
-            value_range=(2, 50)
+            value_range=SCALE_RANGE
         )
 
         UILabel(
-            relative_rect=pygame.Rect((0, 27*9, 240, 27)),
+            relative_rect=pygame.Rect((0, 27*8, 120, 27)),
             manager=self.ui_manager,
             container=panel,
             text="Octaves"
         )
 
         self.octaves_entry = UITextEntryLine(
-            relative_rect=pygame.Rect((0, 27*10, 240, 27)),
+            relative_rect=pygame.Rect((120, 27*8, 120, 27)),
             manager=self.ui_manager,
             container=panel
         )
@@ -159,55 +160,62 @@ class Main:
         self.octaves_entry.set_allowed_characters("numbers")
 
         self.octaves_slider = UIHorizontalSlider(
-            relative_rect=pygame.Rect((0, 27*11, 240, 27)),
+            relative_rect=pygame.Rect((0, 27*9, 240, 27)),
             manager=self.ui_manager,
             container=panel,
             start_value=OCTAVES,
-            value_range=(1, 10)
+            value_range=OCTAVES_RANGE
         )
 
         UILabel(
-            relative_rect=pygame.Rect((0, 27*12, 240, 27)),
+            relative_rect=pygame.Rect((0, 27*10, 120, 27)),
             manager=self.ui_manager,
             container=panel,
             text="Persistence"
         )
 
         self.persistence_entry = UITextEntryLine(
-            relative_rect=pygame.Rect((0, 27*13, 240, 27)),
+            relative_rect=pygame.Rect((120, 27*10, 120, 27)),
             manager=self.ui_manager,
             container=panel
         )
         self.persistence_entry.set_text(str(PERSISTENCE))
 
         self.persistence_slider = UIHorizontalSlider(
-            relative_rect=pygame.Rect((0, 27*14, 240, 27)),
+            relative_rect=pygame.Rect((0, 27*11, 240, 27)),
             manager=self.ui_manager,
             container=panel,
             start_value=PERSISTENCE,
-            value_range=(0, 5)
+            value_range=PERSISTENCE_RANGE
         )
 
         UILabel(
-            relative_rect=pygame.Rect((0, 27*15, 240, 27)),
+            relative_rect=pygame.Rect((0, 27*12, 120, 27)),
             manager=self.ui_manager,
             container=panel,
             text="Lacunarity"
         )
 
         self.lacunarity_entry = UITextEntryLine(
-            relative_rect=pygame.Rect((0, 27*16, 240, 27)),
+            relative_rect=pygame.Rect((120, 27*12, 120, 27)),
             manager=self.ui_manager,
             container=panel
         )
         self.lacunarity_entry.set_text(str(LACUNARITY))
 
         self.lacunarity_slider = UIHorizontalSlider(
-            relative_rect=pygame.Rect((0, 27*17, 240, 27)),
+            relative_rect=pygame.Rect((0, 27*13, 240, 27)),
             manager=self.ui_manager,
             container=panel,
             start_value=LACUNARITY,
-            value_range=(0, 5)
+            value_range=LACUNARITY_RANGE
+        )
+
+        self.generate_rand_button = UIButton(
+            relative_rect=pygame.Rect((60, 27*14, 120, 27)),
+            manager=self.ui_manager,
+            container=panel,
+            text="Random"
         )
 
 
@@ -224,7 +232,7 @@ class Main:
 
 
     def on_loop(self):
-        time_delta = self.clock.tick(FPS) / 1000.0
+        time_delta = self.clock.tick(60) / 1000.0
         self.ui_manager.update(time_delta)
 
 
@@ -262,6 +270,8 @@ class Main:
                     else:
                         self.use_falloff = True
                         self.use_falloff_button.set_text(str(True))
+                elif event.ui_element == self.generate_rand_button:
+                    self.randomize()
 
                 self.regenerate_map()
 
@@ -293,19 +303,19 @@ class Main:
         lacunarity = float(self.lacunarity_entry.get_text())
 
         if map_type == "Random Noise Map":
-            noise_map = core.random_noise(MAP_SIZE//tile_size, seed)
+            noise_map = core.random_noise(500//tile_size, seed)
             self.use_falloff_button.enable()
             self.disable_noise_widgets()
         elif map_type == "Perlin Noise Map":
-            noise_map = core.perlin_noise(MAP_SIZE//tile_size, seed, scale, octaves, persistence, lacunarity)
+            noise_map = core.perlin_noise(500//tile_size, seed, scale, octaves, persistence, lacunarity)
             self.use_falloff_button.enable()
             self.enable_noise_widgets()
         elif map_type == "Simplex Noise Map":
-            noise_map = core.simplex_noise(MAP_SIZE//tile_size, seed, scale, octaves, persistence, lacunarity)
+            noise_map = core.simplex_noise(500//tile_size, seed, scale, octaves, persistence, lacunarity)
             self.use_falloff_button.enable()
             self.enable_noise_widgets()
         elif map_type == "Falloff Map":
-            noise_map = core.generate_falloff_map(MAP_SIZE//tile_size)
+            noise_map = core.generate_falloff_map(500//tile_size)
             self.use_falloff_button.disable()
             self.disable_noise_widgets()
 
@@ -326,6 +336,17 @@ class Main:
                 for y in range(map_size):
                     color = BLACK.lerp(WHITE, noise_map[x][y])
                     self.map_surf.fill(color, ((x*tile_size, y*tile_size), (tile_size, tile_size)))
+
+
+    def randomize(self):
+        map_type = self.map_type_menu.selected_option
+        if map_type != "Falloff Map":
+            self.seed_entry.set_text(str(randint(*SEED_RANGE)))
+            if map_type != "Random Noise Map":
+                self.scale_entry.set_text(str(randint(*SCALE_RANGE)))
+                self.octaves_entry.set_text(str(randint(*OCTAVES_RANGE)))
+                self.persistence_entry.set_text(str(uniform(*PERSISTENCE_RANGE)))
+                self.lacunarity_entry.set_text(str(uniform(*LACUNARITY_RANGE)))
 
 
     def enable_noise_widgets(self):
