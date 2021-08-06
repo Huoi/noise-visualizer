@@ -1,10 +1,11 @@
 #include <SFML/Config.hpp>
 #include <SFML/Graphics.hpp>
+#include <SFML/System.hpp>
+#include <TGUI/TGUI.hpp>
 
-#include "Label.hpp"
 #include "PerlinNoise.hpp"
-#include "Slider.hpp"
 
+#include <cmath>
 #include <cstdint>
 #include <iostream>
 #include <vector>
@@ -33,66 +34,76 @@ std::vector<std::vector<double>> getNoiseMap(const uint16_t mapSize,
     return map;
 }
 
-sf::Sprite regenerateMap(sf::Texture &texture, const double noiseScale)
+void regenerateMap(sf::Image &image, sf::Texture &texture, sf::Sprite &sprite, double noiseScale)
 {
-    std::vector<std::vector<double>> noiseMap = getNoiseMap(750, 69, noiseScale);
-    sf::Uint8 *pixels = new sf::Uint8[750 * 750 * 4];
+    std::vector<std::vector<double>> noiseMap = getNoiseMap(500, 69, noiseScale);
 
-    // Create pixel array
-    for (int y = 0; y < 750; ++y)
+    // Update pixels
+    for (int y = 0; y < 500; ++y)
     {
-        for (int x = 0; x < 750; ++x)
+        for (int x = 0; x < 500; ++x)
         {
-            int index = (x + y * 750) * 4;
-
-            sf::Uint8 colorValue = 255 * noiseMap[x][y];
-            pixels[index] = colorValue;
-            pixels[index + 1] = colorValue;
-            pixels[index + 2] = colorValue;
-            pixels[index + 3] = 255;
-
-            // pixels[index] = 255;
-            // pixels[index + 1] = 255;
-            // pixels[index + 2] = 255;
-            // pixels[index + 3] = 255 * noiseMap[x][y];
+            sf::Color color(255, 255, 255, 255 * noiseMap[x][y]);
+            image.setPixel(x, y, color);
         }
     }
 
-    sf::Image image;
-    image.create(750, 750, pixels);
-    texture.loadFromImage(image);
-    sf::Sprite sprite;
+    texture.update(image);
     sprite.setTexture(texture);
+}
 
-    return sprite;
+void create_widgets(tgui::GuiSFML &gui)
+{
+    tgui::Theme::setDefault("../assets/Black.txt");
+
+    tgui::Label::Ptr scaleLabel = tgui::Label::create();
+    scaleLabel->setText("Noise scale:");
+    scaleLabel->setTextSize(14);
+    scaleLabel->setPosition(10, 10);
+    gui.add(scaleLabel);
 }
 
 int main()
 {
+    ////////////////////////////////////////////////////////////
+    // Define colors
+    ////////////////////////////////////////////////////////////
+    const sf::Color black(0, 0, 0);
+    const sf::Color white(255, 255, 255);
+    const sf::Color gray(128, 128, 128);
+
+    ////////////////////////////////////////////////////////////
     // Create window
-    sf::RenderWindow window(sf::VideoMode(1250, 750), "Noise Visualizer", sf::Style::Titlebar | sf::Style::Close);
+    ////////////////////////////////////////////////////////////
+    sf::RenderWindow window;
+    window.create(sf::VideoMode(750, 500), "Noise Visualizer", sf::Style::Titlebar | sf::Style::Close);
 
-    // Define fonts and colors
-    sf::Font consolasFont;
-    if (!consolasFont.loadFromFile("../assets/consola.ttf"))
-    {
-        throw "Font not loaded";
-    }
+    ////////////////////////////////////////////////////////////
+    // Create gui manager
+    ////////////////////////////////////////////////////////////
+    tgui::GuiSFML gui;
+    gui.setTarget(window);
+    gui.setFont(tgui::Font("../assets/consola.ttf"));
 
-    sf::Color black(0, 0, 0);
-    sf::Color white(255, 255, 255);
-    sf::Color gray(128, 128, 128);
+    create_widgets(gui);
 
+    ////////////////////////////////////////////////////////////
     // Create textures
+    ////////////////////////////////////////////////////////////
     double currentNoiseScale = 50;
+
+    sf::Image image;
+    image.create(750, 750, black);
     sf::Texture texture;
-    sf::Sprite sprite = regenerateMap(texture, currentNoiseScale);
+    texture.loadFromImage(image);
+    sf::Sprite sprite;
+    sprite.setPosition(250, 0);
 
-    // Create ui widgets
-    Label scaleLabel(775, 10, "Noise Scale:", consolasFont, 30, white);
-    Label scaleValueLabel(1000, 10, "50", consolasFont, 30, white);
-    Slider scaleSlider(775, 70, 450, 10, 30, 20, 1, 100, 50, white, gray);
+    regenerateMap(image, texture, sprite, currentNoiseScale);
 
+    ////////////////////////////////////////////////////////////
+    // Main loop
+    ////////////////////////////////////////////////////////////
     while (window.isOpen())
     {
         // Get events
@@ -110,23 +121,10 @@ int main()
             }
         }
 
-        // Get slider value to update label
-        if (scaleSlider.valueChanged())
-        {
-            double currentNoiseScale = scaleSlider.getValue();
-            scaleValueLabel.setText(std::to_string(currentNoiseScale));
-            regenerateMap(texture, currentNoiseScale);
-        }
-
-        // Draw (not tie, it means Render)
-        window.clear(sf::Color::Black);
-
+        window.clear(black);
         window.draw(sprite);
 
-        scaleValueLabel.draw(window);
-        scaleLabel.draw(window);
-        scaleSlider.draw(window);
-
+        gui.draw();
         window.display();
     }
 
