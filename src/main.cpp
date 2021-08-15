@@ -1,129 +1,139 @@
-#include <SFML/Config.hpp>
 #include <SFML/Graphics.hpp>
-#include <SFML/System.hpp>
 #include <TGUI/TGUI.hpp>
 
 #include "PerlinNoise.hpp"
 
-#include <cmath>
 #include <cstdint>
 #include <iostream>
+#include <string>
 #include <vector>
 
-std::vector<std::vector<double>> getNoiseMap(const uint16_t mapSize,
-                                             const uint32_t seed,
-                                             const double noiseScale)
+#define MAP_WIDTH 250
+#define MAP_HEIGHT 250
+
+#define BLACK sf::Color(0, 0, 0)
+#define WHITE sf::Color(255, 255, 255)
+
+#define MIN_NOISE_SCALE 1.0
+#define MAX_NOISE_SCALE 100.0
+#define DEFAULT_NOISE_SCALE 10.0
+
+namespace tg = tgui;
+
+struct NoiseMap
 {
-    PerlinNoise noise(seed);
+    sf::Image image;
+    sf::Texture texture;
+    sf::Sprite sprite;
+};
 
-    std::vector<std::vector<double>> map(mapSize, std::vector<double>(mapSize));
+NoiseMap map;
 
-    for (int y = 0; y < mapSize; ++y)
+void regenerateNoise(NoiseMap &map, double noiseScale)
+{
+    PerlinNoise noise(69);
+
+    for (uint16_t y = 0; y < MAP_HEIGHT; ++y)
     {
-        for (int x = 0; x < mapSize; ++x)
+        for (uint16_t x = 0; x < MAP_WIDTH; ++x)
         {
             double sampleX = x / noiseScale;
             double sampleY = y / noiseScale;
-
             double noiseValue = noise.noise(sampleX, sampleY, 0);
 
-            map[x][y] = noiseValue;
+            uint8_t colorId = 255 * noiseValue;
+            sf::Color color(colorId, colorId, colorId);
+            map.image.setPixel(x, y, color);
         }
     }
 
-    return map;
+    map.texture.update(map.image);
+    map.sprite.setTexture(map.texture);
 }
 
-void regenerateMap(sf::Image &image, sf::Texture &texture, sf::Sprite &sprite, double noiseScale)
+void updateSlider(tg::Slider::Ptr slider, const tg::String newText)
 {
-    std::vector<std::vector<double>> noiseMap = getNoiseMap(500, 69, noiseScale);
-
-    // Update pixels
-    for (int y = 0; y < 500; ++y)
-    {
-        for (int x = 0; x < 500; ++x)
-        {
-            sf::Color color(255, 255, 255, 255 * noiseMap[x][y]);
-            image.setPixel(x, y, color);
-        }
-    }
-
-    texture.update(image);
-    sprite.setTexture(texture);
+    double newValue = newText.toFloat(1);
+    slider->setValue(newValue);
+    regenerateNoise(map, newValue);
 }
 
-void create_widgets(tgui::GuiSFML &gui)
+void updateBox(tg::EditBox::Ptr box, double newValue)
 {
-    tgui::Theme::setDefault("../assets/Black.txt");
+    box->setText(std::to_string(newValue));
+    regenerateNoise(map, newValue);
+}
 
-    tgui::Label::Ptr scaleLabel = tgui::Label::create();
-    scaleLabel->setText("Noise scale:");
-    scaleLabel->setTextSize(14);
+void createWidgets(tg::GuiSFML &gui, NoiseMap &map)
+{
+    tg::Panel::Ptr panel = tg::Panel::create();
+    panel->setPosition(500, 0);
+    panel->setSize(250, 500);
+    panel->getSharedRenderer()->setBackgroundColor(BLACK);
+
+    tg::Label::Ptr scaleLabel = tg::Label::create();
+    scaleLabel->setText("Noise Scale");
     scaleLabel->setPosition(10, 10);
-    gui.add(scaleLabel);
+    scaleLabel->setSize(110, 20);
+    scaleLabel->getSharedRenderer()->setTextColor(WHITE);
+    scaleLabel->setHorizontalAlignment(tg::Label::HorizontalAlignment::Center);
+    scaleLabel->setVerticalAlignment(tg::Label::VerticalAlignment::Center);
+    panel->add(scaleLabel);
+
+    tg::EditBox::Ptr scaleBox = tg::EditBox::create();
+    scaleBox->setText(std::to_string(DEFAULT_NOISE_SCALE));
+    scaleBox->setPosition(130, 10);
+    scaleBox->setSize(110, 20);
+
+    tg::Slider::Ptr scaleSlider = tg::Slider::create();
+    scaleSlider->setPosition(10, 40);
+    scaleSlider->setSize(230, 20);
+    scaleSlider->setMinimum(MIN_NOISE_SCALE);
+    scaleSlider->setMaximum(MAX_NOISE_SCALE);
+    scaleSlider->setValue(DEFAULT_NOISE_SCALE);
+    scaleSlider->setStep(0.001);
+
+    scaleBox->onReturnOrUnfocus(&updateSlider, scaleSlider);
+    scaleSlider->onValueChange(&updateBox, scaleBox);
+
+    panel->add(scaleBox, "scaleBox");
+    panel->add(scaleSlider);
+
+    gui.add(panel);
 }
 
 int main()
 {
-    ////////////////////////////////////////////////////////////
-    // Define colors
-    ////////////////////////////////////////////////////////////
-    const sf::Color black(0, 0, 0);
-    const sf::Color white(255, 255, 255);
-    const sf::Color gray(128, 128, 128);
+    sf::RenderWindow window(sf::VideoMode(750, 500), "Noise Visualizer");
 
-    ////////////////////////////////////////////////////////////
-    // Create window
-    ////////////////////////////////////////////////////////////
-    sf::RenderWindow window;
-    window.create(sf::VideoMode(750, 500), "Noise Visualizer", sf::Style::Titlebar | sf::Style::Close);
-
-    ////////////////////////////////////////////////////////////
-    // Create gui manager
-    ////////////////////////////////////////////////////////////
-    tgui::GuiSFML gui;
+    tg::GuiSFML gui;
     gui.setTarget(window);
-    gui.setFont(tgui::Font("../assets/consola.ttf"));
+    gui.setTextSize(12);
+    createWidgets(gui, map);
 
-    create_widgets(gui);
+    map.image.create(MAP_WIDTH, MAP_HEIGHT);
+    map.texture.loadFromImage(map.image);
+    map.sprite.setTexture(map.texture);
+    map.sprite.setScale(2, 2);
 
-    ////////////////////////////////////////////////////////////
-    // Create textures
-    ////////////////////////////////////////////////////////////
-    double currentNoiseScale = 50;
+    regenerateNoise(map, DEFAULT_NOISE_SCALE);
 
-    sf::Image image;
-    image.create(750, 750, black);
-    sf::Texture texture;
-    texture.loadFromImage(image);
-    sf::Sprite sprite;
-    sprite.setPosition(250, 0);
-
-    regenerateMap(image, texture, sprite, currentNoiseScale);
-
-    ////////////////////////////////////////////////////////////
-    // Main loop
-    ////////////////////////////////////////////////////////////
     while (window.isOpen())
     {
-        // Get events
         sf::Event event;
-        if (window.pollEvent(event))
+        while (window.pollEvent(event))
         {
-            switch (event.type)
+            gui.handleEvent(event);
+            if (event.type == sf::Event::Closed)
             {
-            case sf::Event::Closed:
                 window.close();
-                break;
-
-            default:
-                break;
             }
         }
 
-        window.clear(black);
-        window.draw(sprite);
+        tg::EditBox::Ptr box = gui.get<tg::EditBox>("scaleBox");
 
+        window.clear(BLACK);
+        window.draw(map.sprite);
         gui.draw();
         window.display();
     }
