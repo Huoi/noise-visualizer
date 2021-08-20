@@ -10,11 +10,8 @@
 #include <string>
 #include <vector>
 
-#define MAP_WIDTH 125
-#define MAP_HEIGHT 125
-
-#define BLACK sf::Color(0, 0, 0)
-#define WHITE sf::Color(255, 255, 255)
+const unsigned int SIZES[6] = {50, 100, 125, 200, 250, 500};
+#define DEFAULT_SIZE_ID 5
 
 #define MIN_SEED 0
 #define MAX_SEED 4294967295
@@ -30,7 +27,7 @@
 
 #define MIN_PERSISTENCE 0.1
 #define MAX_PERSISTENCE 1.0
-#define DEFAULT_PERSISTENCE 0.5
+#define DEFAULT_PERSISTENCE 0.1
 
 #define MIN_LACUNARITY 1.0
 #define MAX_LACUNARITY 10.0
@@ -44,13 +41,14 @@ struct NoiseMap
     sf::Texture texture;
     sf::Sprite sprite;
 
-    double noiseMap[MAP_HEIGHT][MAP_WIDTH];
-
-    uint16_t seed;
+    unsigned int size;
+    unsigned int seed;
     double scale;
-    uint8_t octaves;
+    unsigned int octaves;
     double persistence;
     double lacunarity;
+
+    double noiseMap[500][500];
 };
 
 NoiseMap map;
@@ -64,18 +62,22 @@ void regenerateNoise()
 {
     PerlinNoise noise(map.seed);
 
+    map.image.create(map.size, map.size);
+    double scale = 500.0 / map.size;
+    map.sprite.setScale(scale, scale);
+
     double minNoise = std::numeric_limits<double>::max();
     double maxNoise = std::numeric_limits<double>::min();
 
-    for (uint16_t y = 0; y < MAP_HEIGHT; ++y)
+    for (unsigned int y = 0; y < map.size; ++y)
     {
-        for (uint16_t x = 0; x < MAP_WIDTH; ++x)
+        for (unsigned int x = 0; x < map.size; ++x)
         {
             double amplitude = 1;
             double frequency = 1;
             double noiseValue = 0;
 
-            for (uint8_t i = 0; i < map.octaves; ++i)
+            for (unsigned int i = 0; i < map.octaves; ++i)
             {
                 double sampleX = x / map.scale * frequency;
                 double sampleY = y / map.scale * frequency;
@@ -96,12 +98,12 @@ void regenerateNoise()
         }
     }
 
-    for (uint16_t y = 0; y < MAP_HEIGHT; ++y)
+    for (unsigned int y = 0; y < map.size; ++y)
     {
-        for (uint16_t x = 0; x < MAP_WIDTH; ++x)
+        for (unsigned int x = 0; x < map.size; ++x)
         {
             double noiseValue = inverseLerp(minNoise, maxNoise, map.noiseMap[x][y]);
-            uint8_t colorId = 255 * noiseValue;
+            unsigned int colorId = 255 * noiseValue;
             sf::Color color(colorId, colorId, colorId);
             map.image.setPixel(x, y, color);
         }
@@ -111,9 +113,15 @@ void regenerateNoise()
     map.sprite.setTexture(map.texture);
 }
 
+void updateSize(unsigned int index)
+{
+    map.size = SIZES[index];
+    regenerateNoise();
+}
+
 void updateSeed(const tg::String newText)
 {
-    uint16_t newSeed = newText.toUInt(DEFAULT_SEED);
+    unsigned int newSeed = newText.toUInt(DEFAULT_SEED);
     map.seed = newSeed;
     regenerateNoise();
 }
@@ -123,7 +131,7 @@ void randomSeed(tg::EditBox::Ptr box)
     std::random_device rd;
     std::mt19937 gen(rd());
     std::uniform_int_distribution<> distr(MIN_SEED, MAX_SEED);
-    uint16_t newSeed = distr(gen);
+    unsigned int newSeed = distr(gen);
     map.seed = newSeed;
     regenerateNoise();
     box->setText(std::to_string(newSeed));
@@ -194,13 +202,13 @@ void createWidgets(tg::GuiSFML &gui)
     tg::Panel::Ptr panel = tg::Panel::create();
     panel->setPosition(500, 0);
     panel->setSize(250, 500);
-    panel->getSharedRenderer()->setBackgroundColor(BLACK);
+    panel->getSharedRenderer()->setBackgroundColor(sf::Color::Black);
 
     tg::Label::Ptr sizeLabel = tg::Label::create();
     sizeLabel->setText("Map size");
     sizeLabel->setPosition(10, 10);
     sizeLabel->setSize(110, 20);
-    sizeLabel->getSharedRenderer()->setTextColor(WHITE);
+    sizeLabel->getSharedRenderer()->setTextColor(sf::Color::White);
     sizeLabel->setHorizontalAlignment(tg::Label::HorizontalAlignment::Left);
     sizeLabel->setVerticalAlignment(tg::Label::VerticalAlignment::Center);
     panel->add(sizeLabel);
@@ -208,19 +216,18 @@ void createWidgets(tg::GuiSFML &gui)
     tg::ComboBox::Ptr sizeBox = tg::ComboBox::create();
     sizeBox->setPosition(130, 10);
     sizeBox->setSize(110, 20);
-    sizeBox->addItem("100x100");
-    sizeBox->addItem("125x125");
-    sizeBox->addItem("200x200");
-    sizeBox->addItem("250x250");
-    sizeBox->addItem("500x500");
-    sizeBox->setSelectedItemByIndex(1);
+    for (unsigned int i = 0; i < sizeof(SIZES) / sizeof(SIZES[0]); ++i)
+    {
+        sizeBox->addItem(std::to_string(SIZES[i]));
+    }
+    sizeBox->setSelectedItemByIndex(DEFAULT_SIZE_ID);
     panel->add(sizeBox);
 
     tg::Label::Ptr seedLabel = tg::Label::create();
     seedLabel->setText("Seed");
     seedLabel->setPosition(10, 40);
     seedLabel->setSize(110, 20);
-    seedLabel->getSharedRenderer()->setTextColor(WHITE);
+    seedLabel->getSharedRenderer()->setTextColor(sf::Color::White);
     seedLabel->setHorizontalAlignment(tg::Label::HorizontalAlignment::Left);
     seedLabel->setVerticalAlignment(tg::Label::VerticalAlignment::Center);
     panel->add(seedLabel);
@@ -241,7 +248,7 @@ void createWidgets(tg::GuiSFML &gui)
     scaleLabel->setText("Noise Scale");
     scaleLabel->setPosition(10, 100);
     scaleLabel->setSize(110, 20);
-    scaleLabel->getSharedRenderer()->setTextColor(WHITE);
+    scaleLabel->getSharedRenderer()->setTextColor(sf::Color::White);
     scaleLabel->setHorizontalAlignment(tg::Label::HorizontalAlignment::Left);
     scaleLabel->setVerticalAlignment(tg::Label::VerticalAlignment::Center);
     panel->add(scaleLabel);
@@ -265,7 +272,7 @@ void createWidgets(tg::GuiSFML &gui)
     octavesLabel->setText("Octaves");
     octavesLabel->setPosition(10, 160);
     octavesLabel->setSize(110, 20);
-    octavesLabel->getSharedRenderer()->setTextColor(WHITE);
+    octavesLabel->getSharedRenderer()->setTextColor(sf::Color::White);
     octavesLabel->setHorizontalAlignment(tg::Label::HorizontalAlignment::Left);
     octavesLabel->setVerticalAlignment(tg::Label::VerticalAlignment::Center);
     panel->add(octavesLabel);
@@ -289,7 +296,7 @@ void createWidgets(tg::GuiSFML &gui)
     persistenceLabel->setText("Persistence");
     persistenceLabel->setPosition(10, 220);
     persistenceLabel->setSize(110, 20);
-    persistenceLabel->getSharedRenderer()->setTextColor(WHITE);
+    persistenceLabel->getSharedRenderer()->setTextColor(sf::Color::White);
     persistenceLabel->setHorizontalAlignment(tg::Label::HorizontalAlignment::Left);
     persistenceLabel->setVerticalAlignment(tg::Label::VerticalAlignment::Center);
     panel->add(persistenceLabel);
@@ -313,7 +320,7 @@ void createWidgets(tg::GuiSFML &gui)
     lacunarityLabel->setText("Lacunarity");
     lacunarityLabel->setPosition(10, 280);
     lacunarityLabel->setSize(110, 20);
-    lacunarityLabel->getSharedRenderer()->setTextColor(WHITE);
+    lacunarityLabel->getSharedRenderer()->setTextColor(sf::Color::White);
     lacunarityLabel->setHorizontalAlignment(tg::Label::HorizontalAlignment::Left);
     lacunarityLabel->setVerticalAlignment(tg::Label::VerticalAlignment::Center);
     panel->add(lacunarityLabel);
@@ -332,6 +339,8 @@ void createWidgets(tg::GuiSFML &gui)
     lacunaritySlider->setValue(DEFAULT_LACUNARITY);
     lacunaritySlider->setStep(0.001);
     panel->add(lacunaritySlider);
+
+    sizeBox->onItemSelect(&updateSize);
 
     seedBox->onReturnOrUnfocus(&updateSeed);
     seedBtn->onPress(&randomSeed, seedBox);
@@ -360,11 +369,13 @@ int main()
     gui.setTextSize(12);
     createWidgets(gui);
 
-    map.image.create(MAP_WIDTH, MAP_HEIGHT);
+    map.image.create(SIZES[DEFAULT_SIZE_ID], SIZES[DEFAULT_SIZE_ID]);
     map.texture.loadFromImage(map.image);
     map.sprite.setTexture(map.texture);
-    map.sprite.setScale(4, 4);
+    double scale = 500 / SIZES[DEFAULT_SIZE_ID];
+    map.sprite.setScale(scale, scale);
 
+    map.size = SIZES[DEFAULT_SIZE_ID];
     map.seed = DEFAULT_SEED;
     map.scale = DEFAULT_SCALE;
     map.octaves = DEFAULT_OCTAVES;
@@ -387,7 +398,7 @@ int main()
 
         tg::EditBox::Ptr box = gui.get<tg::EditBox>("scaleBox");
 
-        window.clear(WHITE);
+        window.clear(sf::Color::White);
         window.draw(map.sprite);
         gui.draw();
         window.display();
