@@ -33,6 +33,11 @@ const unsigned int SIZES[6] = {50, 100, 125, 200, 250, 500};
 #define MAX_LACUNARITY 10.0
 #define DEFAULT_LACUNARITY 2
 
+#define MAX_OFFSET 50
+#define MIN_OFFSET -50
+#define DEFAULT_OFFSET_X 0
+#define DEFAULT_OFFSET_Y 0
+
 namespace tg = tgui;
 
 struct NoiseMap
@@ -47,6 +52,8 @@ struct NoiseMap
     unsigned int octaves;
     double persistence;
     double lacunarity;
+    double offsetX;
+    double offsetY;
 
     double noiseMap[500][500];
 };
@@ -79,8 +86,8 @@ void regenerateNoise()
 
             for (unsigned int i = 0; i < map.octaves; ++i)
             {
-                double sampleX = x / map.scale * frequency;
-                double sampleY = y / map.scale * frequency;
+                double sampleX = x / map.scale * frequency + map.offsetX;
+                double sampleY = y / map.scale * frequency + map.offsetY;
 
                 double perlinValue = noise.noise(sampleX, sampleY, 0) * 2 - 1;
                 noiseValue += perlinValue * amplitude;
@@ -193,6 +200,36 @@ void updateLacunaritySlider(tg::Slider::Ptr slider, const tg::String newText)
 void updateLacunarityBox(tg::EditBox::Ptr box, double newValue)
 {
     map.lacunarity = newValue;
+    regenerateNoise();
+    box->setText(std::to_string(newValue));
+}
+
+void updateOffsetXSlider(tg::Slider::Ptr slider, const tg::String newText)
+{
+    double newValue = newText.toFloat(DEFAULT_OFFSET_X);
+    map.offsetX = newValue;
+    regenerateNoise();
+    slider->setValue(newValue);
+}
+
+void updateOffsetXBox(tg::EditBox::Ptr box, double newValue)
+{
+    map.offsetX = newValue;
+    regenerateNoise();
+    box->setText(std::to_string(newValue));
+}
+
+void updateOffsetYSlider(tg::Slider::Ptr slider, const tg::String newText)
+{
+    double newValue = newText.toFloat(DEFAULT_OFFSET_Y);
+    map.offsetY = newValue;
+    regenerateNoise();
+    slider->setValue(newValue);
+}
+
+void updateOffsetYBox(tg::EditBox::Ptr box, double newValue)
+{
+    map.offsetY = newValue;
     regenerateNoise();
     box->setText(std::to_string(newValue));
 }
@@ -340,6 +377,60 @@ void createWidgets(tg::GuiSFML &gui)
     lacunaritySlider->setStep(0.001);
     panel->add(lacunaritySlider);
 
+    tg::Label::Ptr offsetXLabel = tg::Label::create();
+    offsetXLabel->setText("Offset X");
+    offsetXLabel->setPosition(10, 340);
+    offsetXLabel->setSize(110, 20);
+    offsetXLabel->getSharedRenderer()->setTextColor(sf::Color::White);
+    offsetXLabel->setHorizontalAlignment(tg::Label::HorizontalAlignment::Left);
+    offsetXLabel->setVerticalAlignment(tg::Label::VerticalAlignment::Center);
+    panel->add(offsetXLabel);
+
+    tg::EditBox::Ptr offsetXBox = tg::EditBox::create();
+    offsetXBox->setText(std::to_string(DEFAULT_OFFSET_X));
+    offsetXBox->setPosition(130, 340);
+    offsetXBox->setSize(110, 20);
+    panel->add(offsetXBox);
+
+    tg::Slider::Ptr offsetXSlider = tg::Slider::create();
+    offsetXSlider->setPosition(10, 370);
+    offsetXSlider->setSize(230, 20);
+    offsetXSlider->setMinimum(MIN_OFFSET);
+    offsetXSlider->setMaximum(MAX_OFFSET);
+    offsetXSlider->setValue(DEFAULT_OFFSET_X);
+    offsetXSlider->setStep(0.001);
+    panel->add(offsetXSlider);
+
+    tg::Label::Ptr offsetYLabel = tg::Label::create();
+    offsetYLabel->setText("Offset Y");
+    offsetYLabel->setPosition(10, 400);
+    offsetYLabel->setSize(110, 20);
+    offsetYLabel->getSharedRenderer()->setTextColor(sf::Color::White);
+    offsetYLabel->setHorizontalAlignment(tg::Label::HorizontalAlignment::Left);
+    offsetYLabel->setVerticalAlignment(tg::Label::VerticalAlignment::Center);
+    panel->add(offsetYLabel);
+
+    tg::EditBox::Ptr offsetYBox = tg::EditBox::create();
+    offsetYBox->setText(std::to_string(DEFAULT_OFFSET_Y));
+    offsetYBox->setPosition(130, 400);
+    offsetYBox->setSize(110, 20);
+    panel->add(offsetYBox);
+
+    tg::Slider::Ptr offsetYSlider = tg::Slider::create();
+    offsetYSlider->setPosition(10, 430);
+    offsetYSlider->setSize(230, 20);
+    offsetYSlider->setMinimum(MIN_OFFSET);
+    offsetYSlider->setMaximum(MAX_OFFSET);
+    offsetYSlider->setValue(DEFAULT_OFFSET_Y);
+    offsetYSlider->setStep(0.001);
+    panel->add(offsetYSlider);
+
+    tg::Button::Ptr regenerateBtn = tg::Button::create();
+    regenerateBtn->setText("Regenerate Noise");
+    regenerateBtn->setPosition(10, 460);
+    regenerateBtn->setSize(230, 20);
+    panel->add(regenerateBtn);
+
     sizeBox->onItemSelect(&updateSize);
 
     seedBox->onReturnOrUnfocus(&updateSeed);
@@ -356,6 +447,14 @@ void createWidgets(tg::GuiSFML &gui)
 
     lacunarityBox->onReturnOrUnfocus(&updateLacunaritySlider, lacunaritySlider);
     lacunaritySlider->onValueChange(&updateLacunarityBox, lacunarityBox);
+
+    offsetXBox->onReturnOrUnfocus(&updateOffsetXSlider, offsetXSlider);
+    offsetXSlider->onValueChange(&updateOffsetXBox, offsetXBox);
+
+    offsetYBox->onReturnOrUnfocus(&updateOffsetYSlider, offsetYSlider);
+    offsetYSlider->onValueChange(&updateOffsetYBox, offsetYBox);
+
+    regenerateBtn->onPress(&regenerateNoise);
 
     gui.add(panel);
 }
@@ -381,6 +480,8 @@ int main()
     map.octaves = DEFAULT_OCTAVES;
     map.persistence = DEFAULT_PERSISTENCE;
     map.lacunarity = DEFAULT_LACUNARITY;
+    map.offsetX = DEFAULT_OFFSET_X;
+    map.offsetY = DEFAULT_OFFSET_Y;
 
     regenerateNoise();
 
