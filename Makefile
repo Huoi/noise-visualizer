@@ -5,6 +5,7 @@ TGUI_DIR = C:/Program Files (x86)/TGUI
 all: compile link run clean
 
 compile:
+	mkdir -p bin
 	g++ -c src/main.cpp -o bin/main.o -I"$(SFML_DIR)/include" -I"$(TGUI_DIR)/include"
 	g++ -c src/PerlinNoise.cpp -o bin/PerlinNoise.o
 

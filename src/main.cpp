@@ -1,5 +1,6 @@
 #include <SFML/Graphics.hpp>
 #include <TGUI/TGUI.hpp>
+#include <TGUI/Backend/SFML-Graphics.hpp>
 
 #include "PerlinNoise.hpp"
 
@@ -234,7 +235,7 @@ void updateOffsetYBox(tg::EditBox::Ptr box, double newValue)
     box->setText(std::to_string(newValue));
 }
 
-void createWidgets(tg::GuiSFML &gui)
+void createWidgets(tg::BackendGuiSFML &gui)
 {
     tg::Panel::Ptr panel = tg::Panel::create();
     panel->setPosition(500, 0);
@@ -463,7 +464,7 @@ int main()
 {
     sf::RenderWindow window(sf::VideoMode(750, 500), "Noise Visualizer");
 
-    tg::GuiSFML gui;
+    tg::Gui gui;
     gui.setTarget(window);
     gui.setTextSize(12);
     createWidgets(gui);
